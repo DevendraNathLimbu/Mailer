@@ -49,6 +49,59 @@ export const userRegister = async (req, res) => {
 
 }
 
+//user verification
+export const verification = async (req, res) => {
+    try{
+        const authHeader = req.headers.authorization;
+
+        if(!authHeader || !authHeader.startsWith("Bearer ")){
+            return res.status(401).send({
+                message: "Authorization token is missing or invalid"
+            })
+        }
+
+        const token = authHeader.split(" ")[1];
+
+        let decoder;
+
+        try{
+        decoder = jwt.verify(token, process.env.SECRET_KEY);
+        }catch(err){
+        if(err.name == "TokenExpiryError"){
+            return res.status(401).send({
+                message: "Invalid token or token expired!"
+            })
+        }
+        return res.status(401).send({
+            message: "Error verifying user! token error"
+        })
+        }
+
+        const user = await User.findById(decoder.id);
+
+        if(!user){
+            return res.status(404).send({
+                message: "User not found"
+            })
+        }
+
+        user.isVerified = true;
+        user.token = null;
+
+        await user.save();
+
+        return res.status(200).send({
+            message: "Email verified Successfully"
+        })
+
+    }
+    catch(err){
+        return res.status(401).send({
+            message: "Error verifying user!"
+        })
+    }
+}
+
 //user login
 export const userLogin = async (req, res) => {
     try{
@@ -104,4 +157,19 @@ export const userLogin = async (req, res) => {
             err
         })
     }
+}
+
+//forgot/reset password
+export const renewPass = async (req, res) => {
+    const {email} = req.body;
+
+    const exists = await User.findOne({email});
+
+    if(!exists){
+        return res.status(404).send({
+            message: "Invalid email, User do not exist!"
+        })
+    }
+
+    
 }
