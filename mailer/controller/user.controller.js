@@ -48,3 +48,60 @@ export const userRegister = async (req, res) => {
 }
 
 }
+
+//user login
+export const userLogin = async (req, res) => {
+    try{
+        const {email, password} = req.body;
+
+    const exists = await User.findOne({email});
+
+    if(!exists){
+        return res.status(404).send({
+            message: "User not found! Please register before login"
+        })
+    }
+
+    const comparePassword = await bcrypt.compare(password, exists.password);
+
+    if(!comparePassword) {
+        return res.status(401).send({
+            message: "Incorrect password"
+        })
+    }
+
+    const token = jwt.sign({
+        userID: exists._id,
+        username: exists.username,
+        email: exists.email
+    }, process.env.SECRET_KEY, {expiresIn: '1d'})
+
+    req.user = {
+        userID: exists._id,
+        username: exists.username,
+        email: exists.email
+    };
+
+    req.token = token;
+    
+    if(exists.isVerified == false) {
+         return res.status(403).send({
+            message: "User is not verified"
+         })
+    }
+
+    exists.isLoggedIn = true;
+    exists.token = null;
+    await exists.save();
+
+    return res.status(200).send({
+        message: "User successfully logged In"
+    })
+    }
+    catch(err){
+        return res.status(400).send({
+            message: "Error Occured while logging In",
+            err
+        })
+    }
+}

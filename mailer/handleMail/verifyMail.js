@@ -14,7 +14,7 @@ const mailOptions = {
     from: process.env.APP_USER,
     to: email,
     subject: "Test Mail",
-    text: `Hello Mr/Mrs, randiko ban machikne radi puti mukhe muji`
+    text: `Hello Mr/Mrs, Thanks for verifying your email.`
 };
 
 transporter.sendMail(mailOptions, (error, info) => {
