@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import verifyMail from '../handleMail/verifyMail.js'
 import jwt from 'jsonwebtoken';
 import 'dotenv/config';
+import { Session } from "../model/session.model.js";
 
 //register user
 export const userRegister = async (req, res) => {
@@ -147,6 +148,16 @@ export const userLogin = async (req, res) => {
     exists.token = null;
     await exists.save();
 
+    //session for user
+    const existingSession = await Session.findOne({userId: exists._id});
+    if(existingSession){
+        await Session.deleteOne({userId: exists._id});
+    }
+
+    await Session.create({
+        userId: user._id
+    })
+
     return res.status(200).send({
         message: "User successfully logged In"
     })
@@ -162,9 +173,17 @@ export const userLogin = async (req, res) => {
 //user logout
 export const userLogOut = async (req, res) => {
     try{
-        
-    }catch(err){
+        const userId = req.userId;
+        await Session.deleteMany({userId});
+        await User.findByIdAndUpdate(userId,{isLoggedIn: false});
 
+        return res.status(200).json({
+            message: "User successfully Logged Out!"
+        })
+    }catch(err){
+        return res.status(500).json({
+            message: "Failed to log out"
+        })
     }
 }
 
