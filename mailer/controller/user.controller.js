@@ -159,6 +159,15 @@ export const userLogin = async (req, res) => {
     }
 }
 
+//user logout
+export const userLogOut = async (req, res) => {
+    try{
+        
+    }catch(err){
+
+    }
+}
+
 //forgot/reset password
 export const renewPass = async (req, res) => {
     const {email} = req.body;
