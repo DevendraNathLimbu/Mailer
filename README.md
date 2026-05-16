@@ -44,6 +44,6 @@ APP_PASS=your_email_app_password
 Clone the repository:
 
 ```bash
-git clone https://github.com/your-username/mailer.git
+git clone https://github.com/DevendraNathLimbu/Mailer
 cd mailer
 npm run dev
