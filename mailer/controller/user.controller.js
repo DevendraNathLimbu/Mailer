@@ -266,3 +266,38 @@ export const verifyOTP = async (req, res) => {
      })
     }
 }
+
+//change password
+export const changePassword = async (req, res) => {
+    const {newPassword, confirmPassword} = req.body;
+
+    if(newPassword != confirmPassword){
+        return res.status(401).json({
+            message: "Please enter the same password for both fields."
+        })
+    }
+    try{
+        const email = req.params.email;
+
+        const user = await User.findOne({email});
+        if(!user){
+            return res.status(402).json({
+                message: "User not found!"
+            })
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        user.password = hashedPassword;
+        await user.save();
+
+        return res.status(200).json({
+            message: "Password renewed successfully!"
+        })
+
+    }catch(err){
+        return res.status(500).json({
+            message: "Internal server error!"
+        })
+    }
+}

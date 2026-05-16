@@ -1,5 +1,5 @@
 import express from 'express';
-import { userRegister, verification ,userLogin, forgetPassword, verifyOTP } from '../controller/user.controller.js'
+import { userRegister, verification ,userLogin, forgetPassword, verifyOTP, changePassword } from '../controller/user.controller.js'
 
 const router = express.Router();
 
@@ -17,5 +17,8 @@ router.post('/forget-password', forgetPassword);
 
 //Verify OTP
 router.post('/verify-otp/:email', verifyOTP);
+
+//Change password
+router.post('/change-password/:email', changePassword);
 
 export default router;
