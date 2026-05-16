@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: null
     },
-    opt:{
+    otp:{
         type: String,
         default: null
     },

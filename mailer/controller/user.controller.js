@@ -1,9 +1,10 @@
 import User from "../model/user.model.js";
 import bcrypt from 'bcrypt';
 import verifyMail from '../handleMail/verifyMail.js'
+import handleOTP from "../handleMail/handleOTP.js";
 import jwt from 'jsonwebtoken';
 import 'dotenv/config';
-import { Session } from "../model/session.model.js";
+import Session from "../model/session.model.js";
 
 //register user
 export const userRegister = async (req, res) => {
@@ -153,10 +154,10 @@ export const userLogin = async (req, res) => {
     if(existingSession){
         await Session.deleteOne({userId: exists._id});
     }
-
-    await Session.create({
-        userId: user._id
-    })
+    const newSession = new Session({
+        userId: exists._id
+    });
+    await newSession.save();
 
     return res.status(200).send({
         message: "User successfully logged In"
@@ -187,17 +188,81 @@ export const userLogOut = async (req, res) => {
     }
 }
 
-//forgot/reset password
-export const renewPass = async (req, res) => {
-    const {email} = req.body;
+//forgot/reset password - send OTP
+export const forgetPassword = async (req, res) => {
+   try{
+     const { email } = req.body;
 
     const exists = await User.findOne({email});
 
-    if(!exists){
-        return res.status(404).send({
-            message: "Invalid email, User do not exist!"
+    if(!exists) {
+        return res.status(401).json({
+            message: "User do not exist"
         })
     }
-
     
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiry = Date.now() + 10 * 60 * 1000;
+
+    exists.otp = otp;
+    exists.OTP_expiry = otpExpiry;
+
+    await exists.save();
+    
+    await handleOTP(otp, email);
+
+    return res.status(200).json({
+        message: "Password reset OTP sent successfully!",
+    })
+
+   }
+  catch(err){
+    return res.status(500).json({
+        message: "Internal server error",
+        error: err.message
+    })
+  }
+}
+
+//Check otp
+export const verifyOTP = async (req, res) => {
+    try{
+       const {otp} = req.body;
+       const email = req.params.email;
+
+       if(!otp) {
+        return res.status(400).json({
+            message: "OTP is required"
+        })
+       }
+
+       const user = await User.findOne({email});
+
+       if(user.OTP_expiry < new Date()){
+          return res.status(400).json({
+            message: "OTP expired!"
+          })
+       }
+
+       if(otp != user.otp){
+        return res.status(400).json({
+            message: "Invalid OTP!"
+        })
+       }
+
+       user.otp = null;
+       user.OTP_expiry = null;
+       await user.save();
+
+    return res.status(200).json({
+        message: "User OTP is verified successfully!"
+    })
+
+       
+    }catch(err){
+     return res.status(500).json({
+        message: "Internal server error",
+        error: err.message
+     })
+    }
 }
